@@ -9,12 +9,12 @@ using System.Text.Json.Serialization;
 
 namespace BountyBoard.Services;
 
-/// <summary>
+
 /// Singleton service responsible for:
 ///   • Generating three random PMC-name targets on startup
 ///   • Persisting state to /data/bounty_state.json between restarts
 ///   • Exposing helpers for the bot commands to query and claim bounties
-/// </summary>
+
 [Injectable(InjectionType.Singleton)]
 public class BountyStateService(
     ISptLogger<BountyStateService> logger,
@@ -23,7 +23,7 @@ public class BountyStateService(
 {
     // ── Reward pool ────────────────────────────────────────────────────────────
 
-    /// <summary>Template IDs for the random high-tier medical reward.</summary>
+    /// Template IDs for the random high-tier medical reward.
     private static readonly string[] HighTierMedicals =
     [
         "5d02778e86f774203e7dedbe", // Surv12 field surgery kit
@@ -46,10 +46,10 @@ public class BountyStateService(
 
     public int RewardRoubles => _config.RewardRoubles;
 
-    /// <summary>
+   
     /// Call once from <see cref="BountyBoardMod.OnLoad"/> after the DB is ready.
     /// Loads existing state from disk, or generates a fresh cycle if none exists.
-    /// </summary>
+   
     public void Initialize(Assembly modAssembly)
     {
         var modPath = modHelper.GetAbsolutePathToModFolder(modAssembly);
@@ -85,22 +85,22 @@ public class BountyStateService(
             logger.Info($"  [{(b.IsCompleted ? "DONE" : "OPEN")}] {b.TargetName}");
     }
 
-    /// <summary>Returns all bounties that have not yet been claimed.</summary>
+    /// Returns all bounties that have not yet been claimed.
     public IReadOnlyList<Bounty> GetActiveBounties() =>
         (_state?.Bounties ?? []).Where(b => !b.IsCompleted).ToList();
 
-    /// <summary>Returns all bounties in the current cycle (including completed ones).</summary>
+    /// Returns all bounties in the current cycle (including completed ones).
     public IReadOnlyList<Bounty> GetAllBounties() =>
         _state?.Bounties ?? [];
 
-    /// <summary>Picks a random high-tier medical template ID for the reward package.</summary>
+    /// Picks a random high-tier medical template ID for the reward package.
     public string GetRandomMedicalTpl() =>
         HighTierMedicals[Rng.Next(HighTierMedicals.Length)];
 
-    /// <summary>
+  
     /// Attempts to mark the named bounty as complete for the given session.
     /// Returns <c>true</c> if the bounty was found, was still open, and has now been claimed.
-    /// </summary>
+   
     public bool TryClaimBounty(string targetName, string sessionId)
     {
         if (_state == null) return false;
@@ -129,9 +129,9 @@ public class BountyStateService(
 
     // ── Private helpers ────────────────────────────────────────────────────────
 
-    /// <summary>
+   
     /// Loads the state file if it exists and is valid; otherwise generates a fresh cycle.
-    /// </summary>
+  
     private BountyState LoadOrGenerate()
     {
         if (File.Exists(_stateFilePath))
@@ -157,10 +157,10 @@ public class BountyStateService(
         return GenerateNewBounties();
     }
 
-    /// <summary>
+    
     /// Picks 3 unique, random PMC names from the USEC/BEAR bot name pools.
     /// Names are formatted as "FirstName LastName" to match the dogtag Nickname field.
-    /// </summary>
+   
     private BountyState GenerateNewBounties()
     {
         var bots = databaseService.GetBots().Types;
@@ -210,7 +210,7 @@ public class BountyStateService(
         };
     }
 
-    /// <summary>Writes the current state to <c>bounty_state.json</c>.</summary>
+    /// Writes the current state to <c>bounty_state.json</c>.
     private void Persist()
     {
         if (_stateFilePath == null || _state == null) return;
