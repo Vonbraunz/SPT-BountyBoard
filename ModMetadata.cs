@@ -2,10 +2,10 @@ using SPTarkov.Server.Core.Models.Spt.Mod;
 
 namespace BountyBoard;
 
-/// <summary>
+
 /// Replaces the old package.json — required for all SPT 4.0 mods.
 /// All properties must be overridden; unused ones may be left null.
-/// </summary>
+
 public record ModMetadata : AbstractModMetadata
 {
     public override string ModGuid { get; init; } = "com.VonBraunZ.bountyboard";
