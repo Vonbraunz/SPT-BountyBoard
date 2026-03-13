@@ -10,7 +10,8 @@ A server-side mod for **Single Player Tarkov (SPT) 4.0** that adds a dynamic bou
 - **Randomized PMC targets** generated from the real SPT bot name pool each cycle
 - **Claim rewards** by typing a command after extracting with a target's dogtag in your stash
 - **Auto-rotating cycle** — when all contracts are completed, a fresh set of targets is immediately generated
-- **Configurable** — adjust target count and ruble reward via a simple JSON config file
+- **Timed refresh** — bounty cycle resets every 24 hours regardless of completion (configurable)
+- **Fully configurable** — target count, refresh interval, currency type, currency amount, and bonus item pool all set via `config.json`
 - **Persistent state** — bounty progress is saved to disk and survives server restarts
 
 ---
