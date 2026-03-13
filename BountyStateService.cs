@@ -21,18 +21,6 @@ public class BountyStateService(
     DatabaseService databaseService,
     ModHelper modHelper)
 {
-    // ── Reward pool ────────────────────────────────────────────────────────────
-
-    /// Template IDs for the random high-tier medical reward.
-    private static readonly string[] HighTierMedicals =
-    [
-        "5d02778e86f774203e7dedbe", // Surv12 field surgery kit
-        "590c661e86f7741e566b646a", // Grizzly medical kit
-        "5755356824597772cb798962", // IFAK
-        "5c0e533786f7747fa1419862", // Propital regenerative stimulant injector
-        "5c0e530286f7747fa1419869", // Morphine injector
-    ];
-
     // ── State ──────────────────────────────────────────────────────────────────
 
     private static readonly Random Rng = new();
@@ -44,12 +32,12 @@ public class BountyStateService(
 
     // ── Public API ─────────────────────────────────────────────────────────────
 
-    public int RewardRoubles => _config.RewardRoubles;
+    public RewardConfig Rewards => _config.Rewards;
 
    
     /// Call once from <see cref="BountyBoardMod.OnLoad"/> after the DB is ready.
     /// Loads existing state from disk, or generates a fresh cycle if none exists.
-   
+  
     public void Initialize(Assembly modAssembly)
     {
         var modPath = modHelper.GetAbsolutePathToModFolder(modAssembly);
@@ -65,7 +53,7 @@ public class BountyStateService(
             {
                 var raw = File.ReadAllText(configPath);
                 _config = JsonSerializer.Deserialize<BountyConfig>(raw) ?? new BountyConfig();
-                logger.Info($"[BountyBoard] Config loaded — Targets: {_config.TargetCount}, Reward: {_config.RewardRoubles:N0} roubles");
+                logger.Info($"[BountyBoard] Config loaded — Targets: {_config.TargetCount}, Reward: {_config.Rewards.CurrencyAmount:N0} (tpl: {_config.Rewards.CurrencyTpl})");
             }
             catch (Exception ex)
             {
@@ -94,10 +82,15 @@ public class BountyStateService(
         _state?.Bounties ?? [];
 
     /// Picks a random high-tier medical template ID for the reward package.
-    public string GetRandomMedicalTpl() =>
-        HighTierMedicals[Rng.Next(HighTierMedicals.Length)];
+    public string GetRandomMedicalTpl()
+    {
+        var pool = _config.Rewards.MedicalItems;
+        return pool.Count > 0
+            ? pool[Rng.Next(pool.Count)]
+            : "590c661e86f7741e566b646a"; // fallback: Grizzly
+    }
 
-  
+   
     /// Attempts to mark the named bounty as complete for the given session.
     /// Returns <c>true</c> if the bounty was found, was still open, and has now been claimed.
    
@@ -131,7 +124,7 @@ public class BountyStateService(
 
    
     /// Loads the state file if it exists and is valid; otherwise generates a fresh cycle.
-  
+   
     private BountyState LoadOrGenerate()
     {
         if (File.Exists(_stateFilePath))
@@ -143,7 +136,14 @@ public class BountyStateService(
 
                 if (loaded?.Bounties is { Count: > 0 })
                 {
-                    logger.Info("[BountyBoard] Loaded existing bounty cycle from disk.");
+                    var age = DateTime.UtcNow - loaded.GeneratedAt;
+                    if (age.TotalHours >= _config.RefreshHours)
+                    {
+                        logger.Info($"[BountyBoard] Cycle expired ({age.TotalHours:F1}h old, limit is {_config.RefreshHours}h) — generating fresh bounties.");
+                        return GenerateNewBounties();
+                    }
+
+                    logger.Info($"[BountyBoard] Loaded existing bounty cycle from disk ({age.TotalHours:F1}h old).");
                     return loaded;
                 }
             }

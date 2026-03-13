@@ -50,8 +50,7 @@ public class BountyCommand(
 
     // ── Template IDs ───────────────────────────────────────────────────────────
 
-    private static readonly MongoId RoubleTpl           = new("5449016a4bdc2d6f028b456f");
-    private const int    RewardStorageSeconds = 72 * 3600;
+    private const int RewardStorageSeconds = 72 * 3600;
 
     // ── Sub-command handlers ───────────────────────────────────────────────────
 
@@ -72,7 +71,7 @@ public class BountyCommand(
         sb.AppendLine("Type 'bounty claim' to collect payment.\n");
         for (int i = 0; i < active.Count; i++)
             sb.AppendLine($"  [{i + 1}] {active[i].TargetName}");
-        sb.AppendLine($"\nReward per contract: {bountyStateService.RewardRoubles:N0} roubles + high-tier medical item");
+        sb.AppendLine($"\nReward per contract: {bountyStateService.Rewards.CurrencyAmount:N0} + high-tier medical item");
         sb.AppendLine("=================================");
 
         mailSendService.SendUserMessageToPlayer(sessionId, sender, sb.ToString());
@@ -145,7 +144,7 @@ public class BountyCommand(
         {
             mailSendService.SendUserMessageToPlayer(sessionId, sender,
                 $"Contract(s) confirmed: {string.Join(", ", claimed)}\n\n" +
-                "Check your in-game messages for your payment.");
+                $"Check your in-game messages for {bountyStateService.Rewards.CurrencyAmount:N0} + medical supplies.");
         }
     }
 
@@ -153,13 +152,14 @@ public class BountyCommand(
 
     private void SendRewardMail(MongoId sessionId, UserDialogInfo sender, string targetName)
     {
+        var rewards = bountyStateService.Rewards;
         var rewardItems = new List<Item>
         {
             new()
             {
                 Id       = new MongoId(),
-                Template = RoubleTpl,
-                Upd      = new Upd { StackObjectsCount = (double)bountyStateService.RewardRoubles }
+                Template = new MongoId(rewards.CurrencyTpl),
+                Upd      = new Upd { StackObjectsCount = (double)rewards.CurrencyAmount }
             },
             new()
             {
@@ -171,7 +171,7 @@ public class BountyCommand(
         var message =
             $"CONTRACT COMPLETE\n\n" +
             $"Target eliminated: {targetName}\n\n" +
-            $"Enclosed: {bountyStateService.RewardRoubles:N0} roubles + medical supplies.\n\n" +
+            $"Enclosed: {rewards.CurrencyAmount:N0} + medical supplies.\n\n" +
             "Good work. Stay sharp out there.";
 
         mailSendService.SendSystemMessageToPlayer(
