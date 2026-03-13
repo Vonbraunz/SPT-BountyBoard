@@ -1,6 +1,6 @@
-# 🎯 Bounty Board — SPT 4.0 Server Mod
+# 🎯 Bounty Board — SPT 4.0.13 Server Mod
 
-A server-side mod for **Single Player Tarkov (SPT) 4.0** that adds a dynamic bounty contract system to your game. A new "Bounty Board" contact appears in your in-game messenger with a rotating list of PMC targets. Hunt them down, bring back their dogtag, and collect your reward.
+A server-side mod for **Single Player Tarkov (SPT) 4.0.13 that adds a dynamic bounty contract system to your game. A new "Bounty Board" contact appears in your in-game messenger with a rotating list of PMC targets. Hunt them down, bring back their dogtag, and collect your reward.
 
 ---
 
@@ -16,12 +16,12 @@ A server-side mod for **Single Player Tarkov (SPT) 4.0** that adds a dynamic bou
 
 ---
 
-## Compatibility 
+## Compatibility
 
-✅Bot Callsigns - Reloaded
-✅[SAIN] Twitch Players
+✅ Bot Callsigns - Reloaded
+✅ [SAIN] Twitch Players
 
-No Incompatibilities yet...
+No incompatibilities yet...
 
 ---
 
@@ -48,7 +48,7 @@ Open the **Bounty Board** contact in your in-game messenger and type:
 2. Find and kill a target PMC in raid
 3. Extract with their **dogtag in your stash** (not inside a container)
 4. Message the Bounty Board and type `bounty claim`
-5. Reward mail arrives with roubles and a random high-tier medical item
+5. Reward mail arrives with your configured currency and a random bonus item
 
 ---
 
@@ -59,24 +59,45 @@ Edit `config.json` in the mod root folder:
 ```json
 {
   "TargetCount": 3,
-  "RewardRoubles": 1000000
+  "RefreshHours": 24,
+  "Rewards": {
+    "CurrencyTpl": "5449016a4bdc2d6f028b456f",
+    "CurrencyAmount": 1000000,
+    "MedicalItems": [
+      "5d02778e86f774203e7dedbe",
+      "590c661e86f7741e566b646a",
+      "5755356824597772cb798962",
+      "5c0e533786f7747fa1419862",
+      "5c0e530286f7747fa1419869"
+    ]
+  }
 }
 ```
 
 | Field | Description | Default |
 |---|---|---|
 | `TargetCount` | Number of targets per bounty cycle | `3` |
-| `RewardRoubles` | Ruble payout per completed contract | `1000000` |
+| `RefreshHours` | Hours before the cycle resets regardless of completion (`0` to disable) | `24` |
+| `Rewards.CurrencyTpl` | Item template ID of the currency reward | `5449016a4bdc2d6f028b456f` (Roubles) |
+| `Rewards.CurrencyAmount` | Stack size of the currency reward | `1000000` |
+| `Rewards.MedicalItems` | Pool of item template IDs to pick the bonus reward from | See above |
 
 Changes take effect on the next server restart.
+
+### Currency Template IDs
+| Currency | Template ID |
+|---|---|
+| Roubles | `5449016a4bdc2d6f028b456f` |
+| Dollars | `5696686a4bdc2da3298b456a` |
+| Euros | `569668774bdc2da2298b4568` |
 
 ---
 
 ## Rewards
 
 Each completed contract pays out:
-- 💰 Configurable ruble amount (default: 1,000,000 ₽)
-- 💊 One random high-tier medical item from the pool:
+- 💰 Configurable currency and amount (default: 1,000,000 ₽)
+- 💊 One random item from the configurable bonus pool (default: high-tier medicals)
   - Surv12 Field Surgery Kit
   - Grizzly Medical Kit
   - IFAK Individual First Aid Kit
