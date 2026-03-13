@@ -11,10 +11,10 @@ using SPTarkov.Server.Core.Servers;
 
 namespace BountyBoard.Commands;
 
-/// <summary>
+
 /// Handles "bounty list" and "bounty claim" inside the Bounty Board chat bot.
 /// Implements IChatCommand so AbstractDialogChatBot can pick it up via DI.
-/// </summary>
+
 [Injectable]
 public class BountyCommand(
     BountyStateService bountyStateService,
