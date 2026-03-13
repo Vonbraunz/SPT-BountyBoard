@@ -15,6 +15,15 @@ A server-side mod for **Single Player Tarkov (SPT) 4.0** that adds a dynamic bou
 
 ---
 
+## Compatibility 
+
+✅Bot Callsigns - Reloaded
+✅[SAIN] Twitch Players
+
+No Incompatibilities yet...
+
+---
+
 ## Installation
 
 1. Build the project or download the latest release
