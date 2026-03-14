@@ -6,16 +6,60 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <OutputType>Library</OutputType>
-    <Version>1.0.0</Version>
-    <!-- Output goes to bin\Debug\BountyBoard\BountyBoard\ — copy this folder into SPT/user/mods/ -->
+    <Version>1.2.0</Version>
+    <!-- DLL builds into bin\<Config>\BountyBoard\BountyBoard\ -->
     <OutputPath>bin\$(Configuration)\$(ProjectName)\$(AssemblyName)\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SPTarkov.Common"     Version="4.0.13" />
-    <PackageReference Include="SPTarkov.DI"         Version="4.0.13" />
+    <PackageReference Include="SPTarkov.Common"      Version="4.0.13" />
+    <PackageReference Include="SPTarkov.DI"          Version="4.0.13" />
     <PackageReference Include="SPTarkov.Server.Core" Version="4.0.13" />
   </ItemGroup>
 
+  <!--
+    PostBuild: assemble a drag-and-drop release zip.
+
+    Zip structure:
+      BountyBoard-<Version>.zip
+      └── SPT/
+          └── user/
+              └── mods/
+                  └── BountyBoard/
+                      ├── BountyBoard.dll
+                      └── config.json
+
+    Users extract the zip and drag the SPT folder into their SPT root.
+  -->
+  <Target Name="PostBuild" AfterTargets="Build">
+
+    <!-- 1. Build the staging folder -->
+    <PropertyGroup>
+      <_StageDir>$(ProjectDir)release\SPT\user\mods\BountyBoard-drb</_StageDir>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(_StageDir)" />
+
+    <!-- 2. Copy the compiled DLL -->
+    <Copy SourceFiles="$(TargetPath)"
+          DestinationFolder="$(_StageDir)" />
+
+    <!-- 3. Copy config.json from the project root -->
+    <Copy SourceFiles="$(ProjectDir)config.json"
+          DestinationFolder="$(_StageDir)"
+          Condition="Exists('$(ProjectDir)config.json')" />
+
+    <!-- 4. Zip and clean up -->
+    <ZipDirectory SourceDirectory="$(ProjectDir)release"
+                  DestinationFile="$(ProjectDir)BountyBoard-$(Version).zip"
+                  Overwrite="true" />
+
+    <RemoveDir Directories="$(ProjectDir)release" />
+
+    <Message Text="Release zip created: BountyBoard-$(Version).zip" Importance="high" />
+
+  </Target>
+
 </Project>
+
