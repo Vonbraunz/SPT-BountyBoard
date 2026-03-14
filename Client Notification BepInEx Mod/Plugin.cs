@@ -24,11 +24,11 @@ namespace BountyBoard.Client
         public static ConfigEntry<KeyboardShortcut>? TestRealTargetKey;
 
         // ── SPT root resolution ────────────────────────────────────────────────
-        /// <summary>
+      
         /// Walks up from the plugin DLL location to find the SPT root.
         /// DLL is always at &lt;SPT_ROOT&gt;\BepInEx\plugins\BountyBoard.Client.dll
         /// so two directories up is the SPT root regardless of working directory.
-        /// </summary>
+      
         public static string SptRoot { get; private set; } = string.Empty;
 
         private static string ResolveSptRoot()
@@ -160,11 +160,11 @@ namespace BountyBoard.Client
             }
         }
 
-        /// <summary>
+   
         /// Pulls the first TargetName where IsCompleted is false directly from the
         /// JSON string — reuses the same regex approach as BountyStateParser so the
         /// test exercises the exact same name extraction logic.
-        /// </summary>
+      
         private string? GetFirstActiveTarget(string json)
         {
             var blocks = Regex.Matches(json, @"\{[^{}]*\}");
