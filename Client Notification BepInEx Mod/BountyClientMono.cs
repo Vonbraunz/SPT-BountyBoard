@@ -10,35 +10,35 @@ using UnityEngine;
 
 namespace BountyBoard.Client
 {
-    /// <summary>
+    
     /// MonoBehaviour attached to the GameWorld singleton at raid start.
     /// Reads bounty_state.json, then watches for bounty targets spawning in-raid.
-    /// </summary>
+   
     public class BountyClientMono : MonoBehaviour
     {
         // ── Singleton ──────────────────────────────────────────────────────────
         public static BountyClientMono? Instance { get; private set; }
 
         // ── State ──────────────────────────────────────────────────────────────
-        /// <summary>Nicknames of all non-completed bounty targets this raid.</summary>
+        /// >Nicknames of all non-completed bounty targets this raid.
         private HashSet<string> _activeTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        /// <summary>Targets we have already notified about, so we fire only once per target per raid.</summary>
+        /// Targets we have already notified about, so we fire only once per target per raid.
         private HashSet<string> _notifiedTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        /// <summary>Targets confirmed killed this raid, so we don't re-notify on respawn edge cases.</summary>
+        /// Targets confirmed killed this raid, so we don't re-notify on respawn edge cases.
         private HashSet<string> _killedTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        /// <summary>Players we are subscribed to for death events, so we can clean up properly.</summary>
+        /// Players we are subscribed to for death events, so we can clean up properly.
         private HashSet<Player> _watchedPlayers = new HashSet<Player>();
 
         private GameWorld? _gameWorld;
 
         // ── Init (called from NewGamePatch) ────────────────────────────────────
-        /// <summary>
+      
         /// Called from <see cref="NewGamePatch"/> as a prefix on GameWorld.OnGameStarted.
         /// Attaches this component to the GameWorld singleton so Unity drives the lifecycle.
-        /// </summary>
+    
         public static void Init()
         {
             if (!Singleton<GameWorld>.Instantiated) return;
@@ -204,11 +204,11 @@ namespace BountyBoard.Client
         }
     }
 
-    /// <summary>
+
     /// Minimal parser for bounty_state.json.
     /// Uses only BCL types (no Newtonsoft / System.Text.Json needed) so it works
     /// on net472 with zero extra references.
-    /// </summary>
+
     internal static class BountyStateParser
     {
         // Matches:  "TargetName": "Hooshu"
