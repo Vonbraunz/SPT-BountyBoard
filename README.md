@@ -1,6 +1,6 @@
-# 🎯 Bounty Board — SPT 4.0.13 Server Mod
+# 🎯 Bounty Board — SPT 4.0.13
 
-A server-side mod for **Single Player Tarkov (SPT) 4.0.13 that adds a dynamic bounty contract system to your game. A new "Bounty Board" contact appears in your in-game messenger with a rotating list of PMC targets. Hunt them down, bring back their dogtag, and collect your reward.
+A dynamic bounty contract system for **Single Player Tarkov (SPT) 4.0.13**. A new "Bounty Board" contact appears in your in-game messenger with a rotating list of PMC targets. Hunt them down, bring back their dogtag, and collect your reward.
 
 ---
 
@@ -8,6 +8,7 @@ A server-side mod for **Single Player Tarkov (SPT) 4.0.13 that adds a dynamic bo
 
 - **Bounty Board contact** appears in your messenger alongside Commando and SPT Friend
 - **Randomized PMC targets** generated from the real SPT bot name pool each cycle
+- **Live HUD notifications** — get an in-raid alert the moment a bounty target spawns, and another when they're eliminated *(requires the companion BepInEx mod, Installed by Default)*
 - **Claim rewards** by typing a command after extracting with a target's dogtag in your stash
 - **Auto-rotating cycle** — when all contracts are completed, a fresh set of targets is immediately generated
 - **Timed refresh** — bounty cycle resets every 24 hours regardless of completion (configurable)
@@ -18,7 +19,7 @@ A server-side mod for **Single Player Tarkov (SPT) 4.0.13 that adds a dynamic bo
 
 ## Compatibility
 
-✅ Bot Callsigns - Reloaded
+✅ Bot Callsigns - Reloaded  
 ✅ [SAIN] Twitch Players
 
 No incompatibilities yet...
@@ -27,9 +28,49 @@ No incompatibilities yet...
 
 ## Installation
 
-1. Build the project or download the latest release
-2. Copy the `BountyBoard` folder into your SPT `user/mods/` directory
+### Server Mod + BepInEx Client (Recommended)
+
+The release zip contains both components and is fully drag-and-drop:
+
+1. Download `BountyBoard-1.2.0.zip`
+2. Extract and drag the `SPT` and `BepInEx` folders into your SPT install root
 3. Start the server — the Bounty Board contact will appear the next time you log in
+
+**What goes where:**
+```
+<SPT Root>/
+├── SPT/user/mods/BountyBoard-drb/
+│   ├── BountyBoard.dll       ← server mod
+│   └── config.json
+└── BepInEx/plugins/
+    └── BountyBoard.Client.dll  ← HUD notification mod
+```
+
+### Server Mod Only
+
+If you don't want in-raid notifications, copy just the `BountyBoard-drb` folder into `SPT/user/mods/`. Everything works without the client mod.
+
+---
+
+## HUD Notifications
+
+When the BepInEx client mod is installed, you'll receive native EFT-style notifications during raids:
+
+- **⚠ BOUNTY TARGET SPOTTED** — fires when a bounty target PMC spawns in your raid, including late wave spawns
+- **☠ BOUNTY COLLECTED** — fires when a bounty target is eliminated
+
+Notifications work automatically with no setup required. The client mod reads `bounty_state.json` at the start of each raid and tracks only active (non-completed) targets.
+
+### Client Mod Configuration
+
+Settings are available in the BepInEx configuration manager (F12 in-game) under `BountyBoard.Client`:
+
+| Setting | Default | Description |
+|---|---|---|
+| Bounty State Path | *(auto)* | Path to `bounty_state.json`. Auto-resolved from SPT root — only change this if your install is non-standard |
+| Enable Debug Keys | `false` | Enables F8/F9 test keybinds for verifying notifications without waiting for a real target |
+| Test Notification Key | `F8` | Fires dummy spotted + killed notifications |
+| Test Real Target Key | `F9` | Reads `bounty_state.json` and fires a real notification using the first active target name |
 
 ---
 
@@ -45,7 +86,7 @@ Open the **Bounty Board** contact in your in-game messenger and type:
 ### How it works
 
 1. Check `bounty list` to see your current targets
-2. Find and kill a target PMC in raid
+2. Find and kill a target PMC in raid — you'll get a HUD alert when they spawn
 3. Extract with their **dogtag in your stash** (not inside a container)
 4. Message the Bounty Board and type `bounty claim`
 5. Reward mail arrives with your configured currency and a random bonus item
@@ -108,7 +149,7 @@ Each completed contract pays out:
 
 ## Requirements
 
-- SPT **4.0.x**
+- SPT **4.0.13**
 - .NET 9 SDK (to build from source)
 
 ---
@@ -121,7 +162,8 @@ cd BountyBoard
 dotnet build
 ```
 
-The compiled DLL will be output to `bin/Release/BountyBoard/`.
+The compiled server mod DLL and release zip will be output to the project root.  
+The BepInEx client mod is a separate project — build it independently and it will be included in the release zip automatically.
 
 ---
 
