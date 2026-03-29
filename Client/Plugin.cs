@@ -2,9 +2,11 @@ using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using SPT.Reflection.Patching;
+using SPT.Reflection.Utils;
 using System.Reflection;
 using System;
 using System.IO;
+using System.Linq;
 using EFT;
 using Comfort.Common;
 using UnityEngine;
@@ -22,6 +24,7 @@ namespace BountyBoard.Client
         public static ConfigEntry<string>? BountyStatePath;
         public static ConfigEntry<KeyboardShortcut>? ScanTargetKey;
         public static ConfigEntry<string>? HunterStatePath;
+        public static ConfigEntry<bool>? ForceHunters;
 
         // ── SPT root resolution ────────────────────────────────────────────────
       
@@ -104,6 +107,12 @@ namespace BountyBoard.Client
                 "Press in-raid to scan for nearby bounty targets. " +
                 "Shows whether any active bounty target is alive in the current raid.");
 
+            ForceHunters = Config.Bind(
+                "Debug",
+                "Force Hunters",
+                false,
+                "Force hunter spawn chance to 100% every raid. For testing only.");
+
             // Detect Fika
             IsFikaInstalled = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.fika.core");
             if (IsFikaInstalled)
@@ -115,6 +124,86 @@ namespace BountyBoard.Client
             Logger.LogInfo("BountyBoard.Client v2.0.0 loaded.");
         }
 
+    }
+
+    // ── Notification helper ────────────────────────────────────────────────────
+    // The EFT notification manager and its enums are obfuscated / nested inside an
+    // obfuscated type and CANNOT be referenced by name at compile time — doing so
+    // emits a TypeRef to the empty-named outer class which causes a TypeLoadException
+    // at runtime. Everything is resolved via reflection and cached on first use.
+    internal static class NotificationHelper
+    {
+        // Duration enum values (ENotificationDurationType): Default=0, Long=1, Infinite=2
+        public const int DurationDefault = 0;
+        public const int DurationLong    = 1;
+
+        // Icon enum values (ENotificationIconType): Default=0, Alert=1, Quest=5
+        public const int IconDefault = 0;
+        public const int IconAlert   = 1;
+        public const int IconQuest   = 5;
+
+        private static MethodInfo? _displayMessage;
+        private static Type? _durationType;
+        private static Type? _iconType;
+        private static bool _initialized;
+
+        private static void EnsureInitialized()
+        {
+            if (_initialized) return;
+            _initialized = true;
+
+            try
+            {
+                var type = PatchConstants.EftTypes.FirstOrDefault(
+                    t => t.GetMethod("DisplayMessageNotification",
+                             BindingFlags.Public | BindingFlags.Static) != null);
+
+                if (type == null)
+                {
+                    BountyClientPlugin.Log(LogLevel.Error,
+                        "NotificationHelper: could not find DisplayMessageNotification type.");
+                    return;
+                }
+
+                _displayMessage = type.GetMethod("DisplayMessageNotification",
+                    BindingFlags.Public | BindingFlags.Static);
+
+                // Grab the enum types from the method's parameter types so we never
+                // create a compile-time reference to them.
+                var parameters = _displayMessage!.GetParameters();
+                _durationType = parameters[1].ParameterType; // ENotificationDurationType
+                _iconType     = parameters[2].ParameterType; // ENotificationIconType
+
+                BountyClientPlugin.Log(LogLevel.Info,
+                    "NotificationHelper: resolved DisplayMessageNotification.");
+            }
+            catch (Exception ex)
+            {
+                BountyClientPlugin.Log(LogLevel.Error,
+                    $"NotificationHelper init failed: {ex.Message}");
+            }
+        }
+
+        public static void Display(string message, int duration = DurationDefault, int iconType = IconDefault)
+        {
+            EnsureInitialized();
+            if (_displayMessage == null || _durationType == null || _iconType == null) return;
+            try
+            {
+                _displayMessage.Invoke(null, new object[]
+                {
+                    message,
+                    Enum.ToObject(_durationType, duration),
+                    Enum.ToObject(_iconType, iconType),
+                    null
+                });
+            }
+            catch (Exception ex)
+            {
+                BountyClientPlugin.Log(LogLevel.Error,
+                    $"NotificationHelper.Display failed: {ex.Message}");
+            }
+        }
     }
 
     // ── Patch: hook GameWorld.OnGameStarted ────────────────────────────────────
@@ -149,8 +238,9 @@ namespace BountyBoard.Client
             var gameWorld = Singleton<GameWorld>.Instance;
             if (gameWorld == null) return;
 
-            // Use reflection to find the location field (obfuscated in EFT)
-            // Walk GameWorld fields looking for one that has a BossLocationSpawn property
+            // Walk GameWorld fields and their child properties looking for BossLocationSpawn.
+            // Log every type name we touch so dnSpy can be used to find the correct path
+            // if this search fails.
             try
             {
                 foreach (var field in typeof(GameWorld).GetFields(
@@ -161,14 +251,22 @@ namespace BountyBoard.Client
                     catch { continue; }
                     if (val == null) continue;
 
-                    if (TryStripHunterSpawns(val)) return;
+                    BountyClientPlugin.Log(LogLevel.Debug,
+                        $"[StripPatch] GameWorld field '{field.Name}' type={val.GetType().Name}");
+
+                    if (TryStripHunterSpawns(val, field.Name)) return;
 
                     foreach (var prop in val.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
                     {
                         object sub;
                         try { sub = prop.GetValue(val); }
                         catch { continue; }
-                        if (sub != null && TryStripHunterSpawns(sub)) return;
+                        if (sub == null) continue;
+
+                        BountyClientPlugin.Log(LogLevel.Debug,
+                            $"[StripPatch]   .{prop.Name} type={sub.GetType().Name}");
+
+                        if (TryStripHunterSpawns(sub, $"{field.Name}.{prop.Name}")) return;
                     }
                 }
             }
@@ -178,7 +276,8 @@ namespace BountyBoard.Client
             }
 
             BountyClientPlugin.Log(LogLevel.Warning,
-                "Could not find BossLocationSpawn list — hunter spawns may still occur.");
+                "Could not find BossLocationSpawn list — use dnSpy on GameWorld to find the correct path. " +
+                "Check BepInEx log (Debug level) for the field/property tree that was searched.");
         }
 
         // Hunter spawns are tagged with a fractional Time value: SpawnDelay + 0.1337
@@ -186,12 +285,14 @@ namespace BountyBoard.Client
         private const float HunterFingerprint = 0.1337f;
         private const float Epsilon = 0.001f;
 
-        private static bool TryStripHunterSpawns(object obj)
+        private static bool TryStripHunterSpawns(object obj, string path = "")
         {
             var bossSpawnProp = obj.GetType().GetProperty("BossLocationSpawn",
                 BindingFlags.Public | BindingFlags.Instance);
             if (bossSpawnProp == null || !bossSpawnProp.PropertyType.IsGenericType)
                 return false;
+
+            BountyClientPlugin.Log(LogLevel.Info, $"[StripPatch] Found BossLocationSpawn at path: {path}");
 
             var listObj = bossSpawnProp.GetValue(obj);
             if (listObj == null) return false;

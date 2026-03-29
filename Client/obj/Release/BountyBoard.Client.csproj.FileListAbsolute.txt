@@ -5,3 +5,11 @@ C:\Users\Odin\Desktop\CS Projects\SPT-BountyBoard-main\Client\obj\Release\Bounty
 C:\Users\Odin\Desktop\CS Projects\SPT-BountyBoard-main\Client\obj\Release\BountyBoard.Client.csproj.CoreCompileInputs.cache
 C:\Users\Odin\Desktop\CS Projects\SPT-BountyBoard-main\Client\obj\Release\BountyBoard.Client.dll
 C:\Users\Odin\Desktop\CS Projects\SPT-BountyBoard-main\Client\obj\Release\BountyBoard.Client.pdb
+C:\Users\Odin\source\repos\Vonbraunz\SPT-BountyBoard\Client\obj\Release\BountyBoard.Client.csproj.AssemblyReference.cache
+C:\Users\Odin\source\repos\Vonbraunz\SPT-BountyBoard\Client\obj\Release\BountyBoard.Client.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Odin\source\repos\Vonbraunz\SPT-BountyBoard\Client\obj\Release\BountyBoard.Client.csproj.CoreCompileInputs.cache
+C:\Users\Odin\source\repos\Vonbraunz\SPT-BountyBoard\Client\obj\Release\BountyBoard.Client.sourcelink.json
+C:\Users\Odin\source\repos\Vonbraunz\SPT-BountyBoard\Client\obj\Release\BountyBoard.Client.dll
+C:\Users\Odin\source\repos\Vonbraunz\SPT-BountyBoard\Client\obj\Release\BountyBoard.Client.pdb
+C:\Users\Odin\source\repos\Vonbraunz\SPT-BountyBoard\Client\bin\Release\BountyBoard.Client.dll
+C:\Users\Odin\source\repos\Vonbraunz\SPT-BountyBoard\Client\bin\Release\BountyBoard.Client.pdb

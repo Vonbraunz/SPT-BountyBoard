@@ -35,7 +35,7 @@ public class BountyBoardMod(
     public async Task OnLoad()
     {
         logger.Info("[BountyBoard] ==========================================");
-        logger.Info("[BountyBoard]  Bounty Board v1.2.0 loading...");
+        logger.Info("[BountyBoard]  Bounty Board v2.0.1 loading...");
         logger.Info("[BountyBoard] ==========================================");
 
         // Register our bot ID in CoreConfig so DialogueController.GetActiveChatBots()

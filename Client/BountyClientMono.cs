@@ -1,7 +1,6 @@
 using BepInEx.Logging;
 using Comfort.Common;
 using EFT;
-using EFT.Communications;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -36,6 +35,13 @@ namespace BountyBoard.Client
         private int _hunterCount;
         private bool _playerDied;
 
+        // ── Hunter config (loaded from config.json) ───────────────────────────
+        private int _configEscortCount = 1;
+        private int _configSpawnDelay = 180;
+        private int _configBaseChance = 25;
+        private int _configChancePerSurvival = 5;
+        private int _configMaxChance = 100;
+
         private GameWorld? _gameWorld;
 
         // ── Init (called from NewGamePatch) ────────────────────────────────────
@@ -60,7 +66,8 @@ namespace BountyBoard.Client
                 BountyClientPlugin.Log(LogLevel.Info,
                     $"Tracking {_activeTargets.Count} bounty target(s): {string.Join(", ", _activeTargets)}");
 
-            // 2 – Hunter system: load state and roll
+            // 2 – Hunter system: load config, state, and roll
+            LoadHunterConfig();
             LoadHunterState();
             RollHunterSpawn();
 
@@ -102,9 +109,9 @@ namespace BountyBoard.Client
             if (HuntersActive && !_hunterNotificationFired && Time.time >= _hunterSpawnTime)
             {
                 _hunterNotificationFired = true;
-                NotificationManagerClass.DisplayMessageNotification(
+                NotificationHelper.Display(
                     "⚠ CONTRACT ALERT\nSomeone has put a contract on you. Hunters have been spotted nearby.",
-                    ENotificationDurationType.Long);
+                    NotificationHelper.DurationLong, NotificationHelper.IconAlert);
                 BountyClientPlugin.Log(LogLevel.Info, "Hunter notification fired — hunters should be spawning now.");
             }
         }
@@ -141,6 +148,51 @@ namespace BountyBoard.Client
         }
 
         // ── Hunter system ──────────────────────────────────────────────────────
+        private void LoadHunterConfig()
+        {
+            string rawPath = "./SPT/user/mods/BountyBoard-drb/config.json";
+            string fullPath = Path.Combine(BountyClientPlugin.SptRoot, rawPath.TrimStart('.', '/', '\\'));
+
+            if (!File.Exists(fullPath))
+            {
+                BountyClientPlugin.Log(LogLevel.Info, "No config.json found — using default hunter settings.");
+                return;
+            }
+
+            try
+            {
+                string json = File.ReadAllText(fullPath);
+
+                var escortMatch = Regex.Match(json, @"""EscortCount""\s*:\s*(\d+)");
+                if (escortMatch.Success && int.TryParse(escortMatch.Groups[1].Value, out int escort))
+                    _configEscortCount = escort;
+
+                var delayMatch = Regex.Match(json, @"""SpawnDelay""\s*:\s*(\d+)");
+                if (delayMatch.Success && int.TryParse(delayMatch.Groups[1].Value, out int delay))
+                    _configSpawnDelay = delay;
+
+                var baseChanceMatch = Regex.Match(json, @"""BaseChance""\s*:\s*(\d+)");
+                if (baseChanceMatch.Success && int.TryParse(baseChanceMatch.Groups[1].Value, out int bc))
+                    _configBaseChance = bc;
+
+                var perSurvivalMatch = Regex.Match(json, @"""ChancePerSurvival""\s*:\s*(\d+)");
+                if (perSurvivalMatch.Success && int.TryParse(perSurvivalMatch.Groups[1].Value, out int cps))
+                    _configChancePerSurvival = cps;
+
+                var maxChanceMatch = Regex.Match(json, @"""MaxChance""\s*:\s*(\d+)");
+                if (maxChanceMatch.Success && int.TryParse(maxChanceMatch.Groups[1].Value, out int mc))
+                    _configMaxChance = mc;
+
+                BountyClientPlugin.Log(LogLevel.Info,
+                    $"Hunter config loaded: EscortCount={_configEscortCount}, SpawnDelay={_configSpawnDelay}s, " +
+                    $"BaseChance={_configBaseChance}, ChancePerSurvival={_configChancePerSurvival}, MaxChance={_configMaxChance}");
+            }
+            catch (Exception ex)
+            {
+                BountyClientPlugin.Log(LogLevel.Error, $"Failed to load config.json: {ex.Message}");
+            }
+        }
+
         private void LoadHunterState()
         {
             _raidsSurvived = 0;
@@ -169,14 +221,14 @@ namespace BountyBoard.Client
 
         private void RollHunterSpawn()
         {
-            int chance = Math.Min(25 + (_raidsSurvived * 5), 100);
-            int roll = UnityEngine.Random.Range(0, 100);
+            bool forceHunters = BountyClientPlugin.ForceHunters?.Value ?? false;
+            int chance = forceHunters ? 100 : Math.Min(_configBaseChance + (_raidsSurvived * _configChancePerSurvival), _configMaxChance);
+            int roll = forceHunters ? 0 : UnityEngine.Random.Range(0, 100);
             HuntersActive = roll < chance;
 
-            // Estimate spawn time (server config SpawnDelay, default 180s)
-            _hunterSpawnTime = Time.time + 180f;
+            _hunterSpawnTime = Time.time + _configSpawnDelay;
             _hunterNotificationFired = false;
-            _hunterCount = 2; // 1 leader + 1 escort
+            _hunterCount = 1 + _configEscortCount; // 1 leader + escorts
 
             BountyClientPlugin.Log(LogLevel.Info,
                 $"Hunter roll: {chance}% chance (survived {_raidsSurvived}), rolled {roll} — " +
@@ -308,18 +360,22 @@ namespace BountyBoard.Client
         {
             if (!HuntersActive) return;
             if (player == null || player.IsYourPlayer) return;
+            if (_hunterPlayers.Count >= _hunterCount) return; // all hunter slots filled
 
-            // Detect PMCs spawning in the hunter time window (±60s of expected spawn time)
             var role = player.Profile?.Info?.Settings?.Role;
             if (role == null) return;
 
             bool isPmc = role == WildSpawnType.pmcBEAR || role == WildSpawnType.pmcUSEC;
             if (!isPmc) return;
 
-            // Only track PMCs that spawn after the hunter delay window
+            // Hunters spawn at SpawnDelay + 0.1337s (server fingerprint).
+            // Use a tight window around that time to avoid tagging PMCs from
+            // other bot spawning mods (ABPS, DONUTS, SWAG, etc.) whose waves
+            // may overlap the general timeframe.
             float raidTime = Time.time;
             float expectedSpawn = _hunterSpawnTime;
-            if (raidTime < expectedSpawn - 60f) return; // too early, regular PMC
+            float tolerance = 15f; // tight ±15s window around the fingerprinted spawn time
+            if (raidTime < expectedSpawn - tolerance || raidTime > expectedSpawn + tolerance) return;
 
             if (_hunterPlayers.Add(player))
             {
@@ -347,14 +403,15 @@ namespace BountyBoard.Client
         {
             player.OnPlayerDeadOrUnspawn -= OnHunterDeadOrUnspawn;
             _hunterPlayers.Remove(player);
+            if (_huntersKilled >= _hunterCount) return; // all hunters already accounted for
             _huntersKilled++;
 
             string name = player.Profile?.Info?.Nickname ?? string.Empty;
             BountyClientPlugin.Log(LogLevel.Info, $"Hunter eliminated: {name}");
 
-            NotificationManagerClass.DisplayMessageNotification(
+            NotificationHelper.Display(
                 $"☠ HUNTER ELIMINATED\n{name} has been taken out. ({_huntersKilled}/{_hunterCount})",
-                ENotificationDurationType.Long);
+                NotificationHelper.DurationLong, NotificationHelper.IconAlert);
         }
 
         // ── Scan ───────────────────────────────────────────────────────────────
@@ -362,17 +419,13 @@ namespace BountyBoard.Client
         {
             if (_activeTargets.Count == 0)
             {
-                NotificationManagerClass.DisplayMessageNotification(
-                    "No active bounties.",
-                    ENotificationDurationType.Default);
+                NotificationHelper.Display("No active bounties.");
                 return;
             }
 
             if (_gameWorld?.AllAlivePlayersList == null)
             {
-                NotificationManagerClass.DisplayMessageNotification(
-                    "No target found.",
-                    ENotificationDurationType.Default);
+                NotificationHelper.Display("No target found.");
                 return;
             }
 
@@ -386,37 +439,33 @@ namespace BountyBoard.Client
                     found.Add(name);
             }
 
-            string hunterStatus = HuntersActive
-                ? $"Hunters in raid. ({_huntersKilled}/{_hunterCount} eliminated)"
-                : "No hunters this raid.";
+            string hunterStatus = HuntersActive ? "Hunters in raid." : "No hunters this raid.";
 
             if (found.Count > 0)
             {
-                NotificationManagerClass.DisplayMessageNotification(
+                NotificationHelper.Display(
                     $"⚠ TARGET SPOTTED\n{string.Join(", ", found)}\n{hunterStatus}",
-                    ENotificationDurationType.Long);
+                    NotificationHelper.DurationLong, NotificationHelper.IconAlert);
             }
             else
             {
-                NotificationManagerClass.DisplayMessageNotification(
-                    $"No target found.\n{hunterStatus}",
-                    ENotificationDurationType.Default);
+                NotificationHelper.Display($"No target found.\n{hunterStatus}");
             }
         }
 
         // ── Notifications ──────────────────────────────────────────────────────
         private static void FireSpotNotification(string targetName)
         {
-            NotificationManagerClass.DisplayMessageNotification(
+            NotificationHelper.Display(
                 $"⚠ BOUNTY TARGET SPOTTED\n{targetName} has been detected in this raid.",
-                ENotificationDurationType.Long);
+                NotificationHelper.DurationLong, NotificationHelper.IconAlert);
         }
 
         private static void FireKillNotification(string targetName)
         {
-            NotificationManagerClass.DisplayMessageNotification(
+            NotificationHelper.Display(
                 $"☠ BOUNTY COLLECTED\n{targetName} has been eliminated.",
-                ENotificationDurationType.Long);
+                NotificationHelper.DurationLong, NotificationHelper.IconQuest);
         }
     }
 

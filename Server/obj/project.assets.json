@@ -285,19 +285,24 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Odin\\.nuget\\packages\\": {}
+    "C:\\Users\\Odin\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.2.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Odin\\Desktop\\CS Projects\\SPT-BountyBoard-main\\Server\\BountyBoard.Server.csproj",
+      "projectUniqueName": "C:\\Users\\Odin\\source\\repos\\Vonbraunz\\SPT-BountyBoard\\Server\\BountyBoard.Server.csproj",
       "projectName": "BountyBoard",
-      "projectPath": "C:\\Users\\Odin\\Desktop\\CS Projects\\SPT-BountyBoard-main\\Server\\BountyBoard.Server.csproj",
+      "projectPath": "C:\\Users\\Odin\\source\\repos\\Vonbraunz\\SPT-BountyBoard\\Server\\BountyBoard.Server.csproj",
       "packagesPath": "C:\\Users\\Odin\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Odin\\Desktop\\CS Projects\\SPT-BountyBoard-main\\Server\\obj\\",
+      "outputPath": "C:\\Users\\Odin\\source\\repos\\Vonbraunz\\SPT-BountyBoard\\Server\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
         "C:\\Users\\Odin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [

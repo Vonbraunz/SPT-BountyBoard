@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BountyBoard")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.2.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.2.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.2.0+92069ed181ad7b42830346991f9fa49467da877f")]
 [assembly: System.Reflection.AssemblyProductAttribute("BountyBoard")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BountyBoard")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.2.0.0")]

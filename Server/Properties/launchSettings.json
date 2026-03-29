@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "BountyBoard.Server": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:55447;http://localhost:55448"
+    }
+  }
+}
