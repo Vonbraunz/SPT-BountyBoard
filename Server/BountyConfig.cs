@@ -1,0 +1,35 @@
+namespace BountyBoard.Models;
+
+public class BountyConfig
+{
+    public int TargetCount { get; set; } = 3;
+    public int RefreshHours { get; set; } = 24;
+    public RewardConfig Rewards { get; set; } = new();
+    public HunterConfig Hunters { get; set; } = new();
+}
+
+public class HunterConfig
+{
+    public bool Enabled { get; set; } = true;
+    public int BaseChance { get; set; } = 25;
+    public int ChancePerSurvival { get; set; } = 5;
+    public int MaxChance { get; set; } = 100;
+    public int EscortCount { get; set; } = 1;
+    public string Difficulty { get; set; } = "hard";
+    public int SpawnDelay { get; set; } = 180;
+    public string Faction { get; set; } = "pmcUSEC";
+}
+
+public class RewardConfig
+{
+    public string CurrencyTpl { get; set; } = "5449016a4bdc2d6f028b456f"; // Roubles
+    public int CurrencyAmount { get; set; } = 1_000_000;
+    public List<string> MedicalItems { get; set; } =
+    [
+      "544fb45d4bdc2dee738b4568", // Salewa First Aid Kit
+      "590c678286f77426c9660122", // IFAK First Aid Kit
+      "590c661e86f7741e566b646a", // Car First Aid Kit
+      "5d02778e86f774203e7dedbe", // CMS Kit
+      "590c657e86f77412b013051d" // Grizzly First Aid Kit
+    ];
+}

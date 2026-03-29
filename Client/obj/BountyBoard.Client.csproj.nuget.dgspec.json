@@ -1,0 +1,53 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\Odin\\Desktop\\CS Projects\\SPT-BountyBoard-main\\Client\\BountyBoard.Client.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\Odin\\Desktop\\CS Projects\\SPT-BountyBoard-main\\Client\\BountyBoard.Client.csproj": {
+      "version": "1.2.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Odin\\Desktop\\CS Projects\\SPT-BountyBoard-main\\Client\\BountyBoard.Client.csproj",
+        "projectName": "BountyBoard.Client",
+        "projectPath": "C:\\Users\\Odin\\Desktop\\CS Projects\\SPT-BountyBoard-main\\Client\\BountyBoard.Client.csproj",
+        "packagesPath": "C:\\Users\\Odin\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Odin\\Desktop\\CS Projects\\SPT-BountyBoard-main\\Client\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Odin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net472"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net472": {
+            "targetAlias": "net472",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.200"
+      },
+      "frameworks": {
+        "net472": {
+          "targetAlias": "net472",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

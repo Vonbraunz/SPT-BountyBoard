@@ -1,0 +1,25 @@
+{
+  "TargetCount": 3,
+  "RefreshHours": 24,
+  "Rewards": {
+    "CurrencyTpl": "5449016a4bdc2d6f028b456f", 
+    "CurrencyAmount": 1000000,
+    "MedicalItems": [
+      "544fb45d4bdc2dee738b4568", 
+      "590c678286f77426c9660122", 
+      "590c661e86f7741e566b646a", 
+      "5d02778e86f774203e7dedbe", 
+      "590c657e86f77412b013051d" 
+    ]
+  },
+  "Hunters": {
+    "Enabled": true,
+    "BaseChance": 25,
+    "ChancePerSurvival": 5,
+    "MaxChance": 100,
+    "EscortCount": 1,
+    "Difficulty": "hard",
+    "SpawnDelay": 180,
+    "Faction": "pmcUSEC"
+  }
+}

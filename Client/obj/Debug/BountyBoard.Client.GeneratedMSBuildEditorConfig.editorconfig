@@ -1,0 +1,8 @@
+is_global = true
+build_property.RootNamespace = BountyBoard.Client
+build_property.ProjectDir = C:\Users\Odin\Desktop\CS Projects\SPT-BountyBoard-main\Client\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.CsWinRTUseWindowsUIXamlProjections = false
+build_property.EffectiveAnalysisLevelStyle = 
+build_property.EnableCodeStyleSeverity = 

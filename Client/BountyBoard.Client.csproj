@@ -1,0 +1,97 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>BountyBoard.Client</AssemblyName>
+    <RootNamespace>BountyBoard.Client</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Version>1.2.0</Version>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Nullable>enable</Nullable>
+
+    <!-- Output -->
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+    <!-- Mod Info -->
+    <ModName>BountyBoard</ModName>
+  </PropertyGroup>
+
+  <!-- Directories — override TarkovDir via CLI or Directory.Build.props if your install differs -->
+  <PropertyGroup>
+    <TarkovDir Condition=" '$(TarkovDir)' == '' ">C:\SPT\ModTest\</TarkovDir>
+    <TarkovManagedDir>$(TarkovDir)EscapeFromTarkov_Data\Managed\</TarkovManagedDir>
+    <TarkovBepInExCoreDir>$(TarkovDir)BepInEx\core\</TarkovBepInExCoreDir>
+    <TarkovPluginsSPTDir>$(TarkovDir)BepInEx\plugins\spt\</TarkovPluginsSPTDir>
+  </PropertyGroup>
+
+  <!-- References -->
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(TarkovManagedDir)Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Comfort">
+      <HintPath>$(TarkovManagedDir)Comfort.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(TarkovManagedDir)UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(TarkovManagedDir)UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(TarkovManagedDir)UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BepInEx">
+      <HintPath>$(TarkovBepInExCoreDir)BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(TarkovBepInExCoreDir)0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="spt-reflection">
+      <HintPath>$(TarkovPluginsSPTDir)spt-reflection.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Post-Build: Create combined release ZIP + Deploy to local SPT -->
+  <Target Name="PostBuild" AfterTargets="Build">
+    <ItemGroup>
+      <ClientDLL Include="$(TargetPath)" />
+      <ServerDLL Include="$(ProjectDir)..\Server\bin\$(Configuration)\BountyBoard.dll" />
+      <ServerConfig Include="$(ProjectDir)..\Server\config.json" />
+    </ItemGroup>
+
+    <!-- ============ Create combined release ZIP ============ -->
+    <RemoveDir Directories="$(ProjectDir)release" />
+
+    <Copy SourceFiles="@(ClientDLL)"
+          DestinationFolder="$(ProjectDir)release\$(ModName)\BepInEx\plugins\" />
+
+    <Copy SourceFiles="@(ServerDLL);@(ServerConfig)"
+          DestinationFolder="$(ProjectDir)release\$(ModName)\SPT\user\mods\BountyBoard-drb\" />
+
+    <ZipDirectory SourceDirectory="$(ProjectDir)release\$(ModName)\"
+                  DestinationFile="$(ProjectDir)release\$(ModName).zip"
+                  Overwrite="true" />
+
+    <Message Importance="high" Text="Release packaged: release\$(ModName).zip" />
+
+    <!-- ============ Deploy to local SPT install (best-effort) ============ -->
+    <Copy SourceFiles="@(ClientDLL)"
+          DestinationFolder="$(TarkovDir)BepInEx\plugins\"
+          ContinueOnError="true" />
+
+    <Copy SourceFiles="@(ServerDLL);@(ServerConfig)"
+          DestinationFolder="$(TarkovDir)SPT\user\mods\BountyBoard-drb\"
+          ContinueOnError="true" />
+  </Target>
+
+</Project>
